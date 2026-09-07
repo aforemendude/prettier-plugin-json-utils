@@ -8,8 +8,8 @@
     "@types/node": "20.19.43",
     "prettier": "3.9.6",
     "typescript": "7.0.2",
-    "vite": "8.2.0",
-    "vitest": "4.1.10"
+    "vite": "8.2.2",
+    "vitest": "4.1.11"
   },
   "devEngines": {
     "runtime": {
