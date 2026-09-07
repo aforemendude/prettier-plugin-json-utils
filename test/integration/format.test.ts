@@ -1,8 +1,51 @@
-import { format, type Options } from 'prettier';
-import { describe, expect, it } from 'vitest';
+import { format, type Options, type Plugin } from 'prettier';
+import * as babelPlugin from 'prettier/plugins/babel';
+import { describe, expect, it, vi } from 'vitest';
 
 import plugin from '../../src/index.js';
 import { SUPPORTED_PARSER_NAMES } from '../../src/plugin/parser-names.js';
+
+describe.each(SUPPORTED_PARSER_NAMES)('parser delegation with %s', (parser) => {
+  it('formats with the native parser when a preceding plugin uses a custom AST and printer', async () => {
+    const original = '{"z":1,"a":2}';
+    const parse = vi.fn((text: string): unknown => JSON.parse(text));
+    const customPlugin: Plugin = {
+      parsers: {
+        [parser]: {
+          astFormat: 'custom-json',
+          locStart: () => 0,
+          locEnd: () => 0,
+          parse,
+        },
+      },
+      printers: {
+        'custom-json': { print: (path) => JSON.stringify(path.node) },
+      },
+    };
+
+    await expect(format(original, { parser, plugins: [customPlugin] })).resolves.toBe(original);
+    await expect(format(original, { parser, plugins: [customPlugin, plugin] })).resolves.toBe(
+      await format('{"a":2,"z":1}', { parser }),
+    );
+    expect(parse).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves preprocessing and parsing from a preceding compatible plugin', async () => {
+    const nativeParser = babelPlugin.parsers[parser];
+    const preprocess = vi.fn(async (text: string) => text.replace('PLACEHOLDER', '2'));
+    const parse = vi.fn(nativeParser.parse);
+    const compatiblePlugin: Plugin = {
+      parsers: { [parser]: { ...nativeParser, preprocess, parse } },
+    };
+
+    await expect(format('{"z":1,"a":PLACEHOLDER}', { parser, plugins: [compatiblePlugin, plugin] })).resolves.toBe(
+      await format('{"a":2,"z":1}', { parser }),
+    );
+    expect(preprocess).toHaveBeenCalledTimes(1);
+    expect(parse).toHaveBeenCalledTimes(1);
+    expect(parse.mock.calls[0]![0]).toBe('{"z":1,"a":2}');
+  });
+});
 
 describe.each(SUPPORTED_PARSER_NAMES)('sort-keys formatting with %s', (parser) => {
   it.each([

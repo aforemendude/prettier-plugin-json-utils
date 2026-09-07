@@ -68,7 +68,7 @@ async function resolveParserDelegate<T>(
 
     const precedingParser = typeof parserEntry === 'function' ? await parserEntry() : parserEntry;
 
-    if (isParser<T>(precedingParser)) {
+    if (isCompatibleParser(precedingParser, nativeParser)) {
       return {
         parser: precedingParser,
         plugins: plugins.slice(0, wrappedPluginIndex),
@@ -161,8 +161,16 @@ function getParserEntry(
   return plugin.parsers[parserName] as ParserEntry<unknown> | undefined;
 }
 
-function isParser<T>(value: unknown): value is Parser<T> {
-  return typeof value === 'object' && value !== null && 'parse' in value && typeof value.parse === 'function';
+function isCompatibleParser<T>(value: unknown, nativeParser: Parser<T>): value is Parser<T> {
+  // The wrapper retains the native parser's printer contract and location functions.
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'parse' in value &&
+    typeof value.parse === 'function' &&
+    'astFormat' in value &&
+    value.astFormat === nativeParser.astFormat
+  );
 }
 
 function hasOffsetSensitiveFormatting(text: string, options: ParserOptions): boolean {

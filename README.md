@@ -66,6 +66,10 @@ override. For example:
 The plugin wraps Prettier's `json`, `jsonc`, `json5`, and `json-stringify` parsers. The default is `sort-keys` for all
 four parsers, including when calling `prettier.format()` without a `filepath`.
 
+When loaded after another JSON plugin, this plugin delegates to the nearest preceding parser with the same `astFormat`
+as Prettier's built-in parser. Parsers with a different or missing `astFormat` and their preprocessors are skipped. If
+no compatible parser is found, Prettier's built-in parser is used.
+
 If you previously relied on automatic mode selection, add explicit overrides like those above to retain the specialized
 behavior. Files with nonstandard names can use the same options.
 

@@ -126,10 +126,55 @@ describe('createParsers', () => {
     expect(options.plugins).toBe(plugins);
   });
 
+  it.each(['direct', 'lazy', 'async lazy'])(
+    'uses the native parser and skips preprocessing for an incompatible %s parser',
+    async (entryType) => {
+      const incompatible = delegateFixture();
+      incompatible.parser.astFormat = 'custom-json';
+      const parserEntry =
+        entryType === 'direct'
+          ? incompatible.parser
+          : () => (entryType === 'lazy' ? incompatible.parser : Promise.resolve(incompatible.parser));
+      const preceding = { parsers: { json: parserEntry } } as unknown as Plugin;
+      const wrappers = { parsers: createParsers() };
+      const plugins = [preceding, wrappers];
+      const options = parserOptions({ plugins });
+      const parser = wrappers.parsers['json']!;
+
+      await expect(parser.preprocess!(` ${text} `, options)).resolves.toBe(` ${text} `);
+      const ast = await parser.parse(text, options);
+
+      expect((getJsonRootNode(ast) as JsonObjectNode).properties.map(getJsonPropertyName)).toEqual(['a', 'z']);
+      expect(incompatible.parse).not.toHaveBeenCalled();
+      expect(incompatible.preprocess).not.toHaveBeenCalled();
+      expect(options.plugins).toBe(plugins);
+    },
+  );
+
+  it('delegates to an earlier compatible parser when the nearest parser has a different AST format', async () => {
+    const compatible = delegateFixture();
+    const incompatible = delegateFixture();
+    incompatible.parser.astFormat = 'custom-json';
+    const wrappers = { parsers: createParsers() };
+    const plugins = [compatible.plugin, incompatible.plugin, wrappers];
+    const options = parserOptions({ plugins });
+    const parser = wrappers.parsers['json']!;
+
+    await expect(parser.preprocess!(` ${text} `, options)).resolves.toBe(text);
+    await expect(parser.parse(text, options)).resolves.toBe(compatible.ast);
+
+    expect(compatible.preprocess).toHaveBeenCalledExactlyOnceWith(` ${text} `, options);
+    expect(compatible.parse).toHaveBeenCalledExactlyOnceWith(text, options);
+    expect(incompatible.preprocess).not.toHaveBeenCalled();
+    expect(incompatible.parse).not.toHaveBeenCalled();
+    expect(options.plugins).toBe(plugins);
+  });
+
   it('skips plugin paths, URLs, missing parsers, inherited entries, and invalid lazy results', async () => {
     const delegate = delegateFixture();
     const wrappers = { parsers: createParsers() };
     const invalidFactory = vi.fn(async () => null);
+    const invalidParse = vi.fn(() => null);
     const skipped = [
       'plugin-name',
       new URL('file:///fixture/plugin.js'),
@@ -137,6 +182,7 @@ describe('createParsers', () => {
       {},
       { parsers: { json5: delegate.parser } },
       { parsers: Object.create({ json: delegate.parser }) },
+      { parsers: { json: { parse: invalidParse } } },
       { parsers: { json: invalidFactory } },
     ] as unknown as ParserOptions<unknown>['plugins'];
     const options = parserOptions({ plugins: [delegate.plugin, ...skipped, wrappers] });
@@ -151,6 +197,7 @@ describe('createParsers', () => {
     );
 
     expect(invalidFactory).toHaveBeenCalledExactlyOnceWith();
+    expect(invalidParse).not.toHaveBeenCalled();
     expect(delegate.parse).toHaveBeenCalledExactlyOnceWith(text, options);
     expect(delegate.seenPlugins).toEqual([[delegate.plugin, ...skipped]]);
   });
