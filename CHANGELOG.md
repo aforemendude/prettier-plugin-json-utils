@@ -2,23 +2,14 @@
 
 ---
 
-## Unreleased
+## v1.0.0
+
+Initial release.
 
 ### Added Features
 
-- A named `sort-keys` mode that recursively sorts object keys while preserving array order and values
-
-### Changed
-
-- `sort-keys` is now the default for all supported JSON parsers and filenames
-- Removed automatic mode selection based on filenames and parsers; configure `package-json` and `vscode-settings`
-  explicitly to retain their specialized behavior
-
-## v0.1.0
-
-### Added Features
-
-- Recursive VS Code settings key sorting
-- Lowercasing and sorting for supported `cSpell` word lists
-- Recursive `package.json` sorting with conditional `exports` and `imports` order preservation
-- Automatic target filename detection and an explicit two-mode Prettier option
+- Default `sort-keys` mode that recursively sorts object keys while preserving array order and values
+- Explicit `vscode-settings` mode for recursive key sorting and lowercasing and sorting of supported `cSpell` word lists
+- Explicit `package-json` mode for recursive key sorting with conditional `exports` and `imports` order preservation
+- A `jsonUtilsMode` Prettier option to select the mode, with no automatic filename or parser-based mode selection
+- Support for Prettier's `json`, `jsonc`, `json5`, and `json-stringify` parsers
