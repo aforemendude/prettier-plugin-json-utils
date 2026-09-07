@@ -7,6 +7,10 @@ export const pluginOptions = {
     category: 'JSON Utils',
     choices: [
       {
+        description: 'Sort object keys recursively while preserving array order and values.',
+        value: 'sort-keys',
+      },
+      {
         description: 'Sort package metadata while retaining conditional exports and imports order.',
         value: 'package-json',
       },
@@ -15,7 +19,8 @@ export const pluginOptions = {
         value: 'vscode-settings',
       },
     ],
-    description: 'Select the opinionated JSON sorting policy.',
+    default: 'sort-keys',
+    description: 'Select the JSON sorting policy.',
     type: 'choice',
   },
 } satisfies SupportOptions;

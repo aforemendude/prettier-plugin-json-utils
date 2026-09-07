@@ -3,7 +3,7 @@
   "bugs": {
     "url": "https://github.com/aforemendude/prettier-plugin-json-utils/issues"
   },
-  "description": "A highly opinionated Prettier plugin for sorting VS Code settings and package.json files.",
+  "description": "A Prettier plugin for sorting JSON keys, with specialized modes for VS Code settings and package.json files.",
   "devDependencies": {
     "@types/node": "20.19.43",
     "prettier": "3.9.6",

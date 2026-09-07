@@ -1,14 +1,9 @@
-import type { SupportedParserName } from './parser-names.js';
-
 export const JSON_UTILS_MODE_OPTION = 'jsonUtilsMode';
-export const JSON_UTILS_MODES = ['package-json', 'vscode-settings'] as const;
+export const JSON_UTILS_MODES = ['sort-keys', 'package-json', 'vscode-settings'] as const;
 
 export type JsonUtilsMode = (typeof JSON_UTILS_MODES)[number];
 
-export function resolveJsonUtilsMode(
-  parserName: SupportedParserName,
-  options: Record<string, unknown>,
-): JsonUtilsMode | undefined {
+export function resolveJsonUtilsMode(options: Record<string, unknown>): JsonUtilsMode {
   const configuredMode = options[JSON_UTILS_MODE_OPTION];
 
   if (configuredMode !== undefined) {
@@ -19,25 +14,9 @@ export function resolveJsonUtilsMode(
     throw new TypeError(`Expected ${JSON_UTILS_MODE_OPTION} to be one of: ${JSON_UTILS_MODES.join(', ')}`);
   }
 
-  const filepath = options['filepath'];
-
-  if (typeof filepath === 'string' && filepath.length > 0) {
-    const filename = filepath.split(/[\\/]/u).at(-1);
-
-    if (filename === 'package.json') {
-      return 'package-json';
-    }
-
-    if (filename === 'settings.json') {
-      return 'vscode-settings';
-    }
-
-    return undefined;
-  }
-
-  return parserName === 'json-stringify' ? 'package-json' : 'vscode-settings';
+  return 'sort-keys';
 }
 
 function isJsonUtilsMode(value: unknown): value is JsonUtilsMode {
-  return value === 'package-json' || value === 'vscode-settings';
+  return value === 'sort-keys' || value === 'package-json' || value === 'vscode-settings';
 }

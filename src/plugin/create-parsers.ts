@@ -27,9 +27,9 @@ function createWrappedParser<T>(parserName: SupportedParserName, nativeParser: P
     async parse(text, options) {
       const delegate = await resolveParserDelegate(parserName, nativeParser, wrappedParser, options);
       const ast = await parseWithDelegate(text, delegate, options);
-      const mode = resolveJsonUtilsMode(parserName, options);
+      const mode = resolveJsonUtilsMode(options);
 
-      if (mode !== undefined && !hasOffsetSensitiveFormatting(text, options)) {
+      if (!hasOffsetSensitiveFormatting(text, options)) {
         sortJsonAst(ast, mode);
       }
 

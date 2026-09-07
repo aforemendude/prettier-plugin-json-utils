@@ -2,6 +2,18 @@
 
 ---
 
+## Unreleased
+
+### Added Features
+
+- A named `sort-keys` mode that recursively sorts object keys while preserving array order and values
+
+### Changed
+
+- `sort-keys` is now the default for all supported JSON parsers and filenames
+- Removed automatic mode selection based on filenames and parsers; configure `package-json` and `vscode-settings`
+  explicitly to retain their specialized behavior
+
 ## v0.1.0
 
 ### Added Features

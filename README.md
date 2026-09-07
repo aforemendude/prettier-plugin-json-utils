@@ -1,9 +1,10 @@
 # Prettier Plugin JSON Utils
 
-A highly opinionated Prettier plugin for sorting VS Code settings and `package.json` files.
+A Prettier plugin for sorting JSON keys, with specialized modes for VS Code settings and `package.json` files.
 
-The plugin has two modes:
+The plugin has three modes:
 
+- `sort-keys` (default) recursively sorts object keys while preserving array order and values.
 - `vscode-settings` recursively sorts object keys and normalizes selected Code Spell Checker word lists.
 - `package-json` recursively sorts object keys while preserving the order-sensitive conditional keys below `exports` and
   `imports`.
@@ -29,22 +30,30 @@ Load the plugin in your Prettier configuration:
 }
 ```
 
-With no additional configuration, the plugin automatically uses `package-json` for files named `package.json` and
-`vscode-settings` for files named `settings.json`. Other JSON files use Prettier's normal behavior unchanged.
+With no additional configuration, the plugin uses `sort-keys` for all supported JSON files. You can also select it
+explicitly:
 
-For a file with a nonstandard name, select either mode with `jsonUtilsMode` in an override:
+```json
+{
+  "jsonUtilsMode": "sort-keys",
+  "plugins": ["@aforemendude/prettier-plugin-json-utils"]
+}
+```
+
+Modes are never inferred from filenames or parsers. To use the specialized modes, set `jsonUtilsMode` globally or in an
+override. For example:
 
 ```json
 {
   "overrides": [
     {
-      "files": "config/editor-preferences.jsonc",
+      "files": "**/settings.json",
       "options": {
         "jsonUtilsMode": "vscode-settings"
       }
     },
     {
-      "files": "fixtures/manifest.json",
+      "files": "**/package.json",
       "options": {
         "jsonUtilsMode": "package-json"
       }
@@ -54,8 +63,20 @@ For a file with a nonstandard name, select either mode with `jsonUtilsMode` in a
 }
 ```
 
-The plugin wraps Prettier's `json`, `jsonc`, `json5`, and `json-stringify` parsers. When calling `prettier.format()`
-without a `filepath`, `json-stringify` selects `package-json`; the other wrapped parsers select `vscode-settings`.
+The plugin wraps Prettier's `json`, `jsonc`, `json5`, and `json-stringify` parsers. The default is `sort-keys` for all
+four parsers, including when calling `prettier.format()` without a `filepath`.
+
+If you previously relied on automatic mode selection, add explicit overrides like those above to retain the specialized
+behavior. Files with nonstandard names can use the same options.
+
+## Sort Keys Mode (Default)
+
+All object keys are sorted recursively with JavaScript's case-sensitive lexicographic ordering, including objects inside
+arrays. Array elements retain their order and string values retain their case. Comments are preserved and move with the
+properties they describe.
+
+This mode also sorts keys inside `exports` and `imports`. Select `package-json` for package manifests that need
+conditional key order preserved, and `vscode-settings` to normalize supported `cSpell` word lists.
 
 ## VS Code Settings Mode
 
