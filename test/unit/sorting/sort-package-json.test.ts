@@ -39,9 +39,18 @@ describe('sortPackageJsonAst', () => {
 
     expect(getPropertyNames(packageJson)).toEqual(['a', 'list', 'z']);
     expect(getPropertyNames(getObjectProperty(packageJson, 'a'))).toEqual(['b', 'y']);
-    expect(getArrayProperty(packageJson, 'list').elements).toEqual([firstEntry, secondEntry]);
-    expect(getPropertyNames(firstEntry)).toEqual(['c', 'd']);
-    expect(getPropertyNames(secondEntry)).toEqual(['a', 'b']);
+    expect(getArrayProperty(packageJson, 'list')).toStrictEqual(
+      array([
+        object([
+          ['c', number(3)],
+          ['d', number(4)],
+        ]),
+        object([
+          ['a', number(1)],
+          ['b', number(2)],
+        ]),
+      ]),
+    );
   });
 
   it('sorts export subpaths and import specifiers while preserving conditional order', () => {
@@ -135,4 +144,84 @@ describe('sortPackageJsonAst', () => {
 
     expect(getPropertyNames(values)).toEqual(['#alias', '-flag', '10', '2']);
   });
+
+  it.each(['metadata', 'root arrays'])('treats exports and imports in %s as ordinary keys', (location) => {
+    const nested = object([
+      [
+        'imports',
+        object([
+          ['node', string('node')],
+          ['default', string('default')],
+        ]),
+      ],
+      [
+        'exports',
+        object([
+          ['node', string('node')],
+          ['default', string('default')],
+        ]),
+      ],
+    ]);
+    const wrap = (node: typeof nested) =>
+      location === 'metadata' ? object([['metadata', node]]) : { type: 'ArrayExpression', elements: [null, node] };
+    const ast = wrap(nested);
+
+    sortPackageJsonAst(ast);
+
+    expect(ast).toStrictEqual(
+      wrap(
+        object([
+          [
+            'exports',
+            object([
+              ['default', string('default')],
+              ['node', string('node')],
+            ]),
+          ],
+          [
+            'imports',
+            object([
+              ['default', string('default')],
+              ['node', string('node')],
+            ]),
+          ],
+        ]),
+      ),
+    );
+  });
+
+  it('preserves exports fallback arrays and their conditional order', () => {
+    const ast = object([
+      [
+        'exports',
+        {
+          type: 'ArrayExpression',
+          elements: [
+            object([
+              ['node', string('./node.js')],
+              ['default', string('./default.js')],
+            ]),
+            null,
+            string('./fallback.js'),
+          ],
+        },
+      ],
+    ]);
+    const expected = structuredClone(ast);
+
+    sortPackageJsonAst(ast);
+
+    expect(ast).toStrictEqual(expected);
+  });
+
+  it.each([undefined, null, {}, { type: 'JsonRoot', node: null }, object([])])(
+    'leaves invalid or empty roots unchanged: %j',
+    (ast) => {
+      const expected = structuredClone(ast);
+
+      sortPackageJsonAst(ast);
+
+      expect(ast).toStrictEqual(expected);
+    },
+  );
 });

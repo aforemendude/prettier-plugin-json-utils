@@ -39,9 +39,18 @@ describe('sortVscodeSettingsAst', () => {
 
     expect(getPropertyNames(settings)).toEqual(['a.setting', 'list.setting', 'z.setting']);
     expect(getPropertyNames(getObjectProperty(settings, 'a.setting'))).toEqual(['a', 'z']);
-    expect(getArrayProperty(settings, 'list.setting').elements).toEqual([firstEntry, secondEntry]);
-    expect(getPropertyNames(firstEntry)).toEqual(['a', 'z']);
-    expect(getPropertyNames(secondEntry)).toEqual(['b', 'd']);
+    expect(getArrayProperty(settings, 'list.setting')).toStrictEqual(
+      array([
+        object([
+          ['a', number(2)],
+          ['z', number(1)],
+        ]),
+        object([
+          ['b', number(4)],
+          ['d', number(3)],
+        ]),
+      ]),
+    );
   });
 
   it.each(['cSpell.flagWords', 'cSpell.ignoreWords', 'cSpell.userWords', 'cSpell.words'])(
@@ -82,6 +91,98 @@ describe('sortVscodeSettingsAst', () => {
 
     sortVscodeSettingsAst(settings);
 
-    expect(mixedList.elements.map((element) => element['value'])).toEqual(['Zoo', 1, 'apple']);
+    expect(mixedList).toStrictEqual(array([string('Zoo'), number(1), string('apple')]));
   });
+
+  it('preserves unsupported word lists and non-array settings', () => {
+    const settings = object([
+      ['cSpell.customWords', array([string('Zoo'), string('apple')])],
+      ['cSpell.words', string('Zoo')],
+      ['cspell.words', array([string('Zoo'), string('apple')])],
+    ]);
+    const expected = structuredClone(settings);
+
+    sortVscodeSettingsAst(settings);
+
+    expect(settings).toStrictEqual(expected);
+  });
+
+  it('sorts objects in mixed word lists without normalizing their strings or changing array positions', () => {
+    const settings = object([
+      [
+        'cSpell.words',
+        {
+          type: 'ArrayExpression',
+          elements: [
+            string('Zoo'),
+            null,
+            object([
+              ['z', number(1)],
+              ['a', number(2)],
+            ]),
+            string('apple'),
+          ],
+        },
+      ],
+    ]);
+
+    sortVscodeSettingsAst(settings);
+
+    expect(settings).toStrictEqual(
+      object([
+        [
+          'cSpell.words',
+          {
+            type: 'ArrayExpression',
+            elements: [
+              string('Zoo'),
+              null,
+              object([
+                ['a', number(2)],
+                ['z', number(1)],
+              ]),
+              string('apple'),
+            ],
+          },
+        ],
+      ]),
+    );
+  });
+
+  it('normalizes ESTree strings and keeps their comments attached after sorting', () => {
+    const settings = object([
+      [
+        'cSpell.words',
+        array([
+          { type: 'Literal', value: 'Zoo', raw: '"Zoo"', comments: ['zoo comment'] },
+          { type: 'Literal', value: 'Apple', raw: '"Apple"', comments: ['apple comment'] },
+        ]),
+      ],
+    ]);
+
+    sortVscodeSettingsAst(settings);
+
+    expect(settings).toStrictEqual(
+      object([
+        [
+          'cSpell.words',
+          array([
+            { type: 'Literal', value: 'apple', raw: '"apple"', comments: ['apple comment'] },
+            { type: 'Literal', value: 'zoo', raw: '"zoo"', comments: ['zoo comment'] },
+          ]),
+        ],
+      ]),
+    );
+  });
+
+  it.each([undefined, null, {}, { type: 'JsonRoot', node: null }, object([]), object([['cSpell.words', array([])]])])(
+    'leaves invalid roots and empty collections unchanged: %j',
+    (ast) => {
+      const expected = structuredClone(ast);
+
+      sortVscodeSettingsAst(ast);
+
+      expect(ast).toStrictEqual(expected);
+    },
+  );
 });
