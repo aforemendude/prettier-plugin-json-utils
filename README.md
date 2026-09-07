@@ -12,7 +12,7 @@ The plugin has three modes:
 ## Requirements
 
 - Node.js 20 or newer
-- Prettier 3
+- Prettier 3.9.0 or newer within version 3
 
 ## Installation
 
@@ -108,6 +108,8 @@ Conditional order is semantically significant in Node.js, so a sequence such as 
 is never alphabetized by this mode.
 
 ## Development
+
+Working on this repository requires Node.js 22.12.0 or newer. The published plugin requires Node.js 20 or newer.
 
 ```sh
 npm install
