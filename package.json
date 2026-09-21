@@ -7,6 +7,7 @@
   "devDependencies": {
     "@types/node": "20.19.43",
     "prettier": "3.9.6",
+    "prettier-plugin-json-utils-published": "npm:@aforemendude/prettier-plugin-json-utils@1.0.0",
     "typescript": "7.0.2",
     "vite": "8.2.2",
     "vitest": "4.1.11"

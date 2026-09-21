@@ -1,4 +1,27 @@
 {
+  "overrides": [
+    {
+      "files": [".prettierrc.json", "tsconfig*.json"],
+      "options": {
+        "jsonUtilsMode": "sort-keys",
+        "plugins": ["prettier-plugin-json-utils-published"]
+      }
+    },
+    {
+      "files": ".vscode/settings.json",
+      "options": {
+        "jsonUtilsMode": "vscode-settings",
+        "plugins": ["prettier-plugin-json-utils-published"]
+      }
+    },
+    {
+      "files": "package.json",
+      "options": {
+        "jsonUtilsMode": "package-json",
+        "plugins": ["prettier-plugin-json-utils-published"]
+      }
+    }
+  ],
   "printWidth": 120,
   "proseWrap": "always",
   "singleQuote": true
