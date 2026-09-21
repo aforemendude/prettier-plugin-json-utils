@@ -22,49 +22,67 @@ npm install --save-dev @aforemendude/prettier-plugin-json-utils
 
 ## Configuration
 
-Load the plugin in your Prettier configuration:
+Sorting keys can change the meaning of JSON files where key order matters. Use Prettier `overrides` to load the plugin
+only for the files you intend to sort, with `plugins` inside each override's `options` instead of at the top level of
+your configuration.
 
-```json
-{
-  "plugins": ["@aforemendude/prettier-plugin-json-utils"]
-}
-```
-
-With no additional configuration, the plugin uses `sort-keys` for all supported JSON files. You can also select it
-explicitly:
-
-```json
-{
-  "jsonUtilsMode": "sort-keys",
-  "plugins": ["@aforemendude/prettier-plugin-json-utils"]
-}
-```
-
-Modes are never inferred from filenames or parsers. To use the specialized modes, set `jsonUtilsMode` globally or in an
-override. For example:
+For example, to sort only `data.json`:
 
 ```json
 {
   "overrides": [
     {
-      "files": "**/settings.json",
+      "files": "data.json",
       "options": {
-        "jsonUtilsMode": "vscode-settings"
-      }
-    },
-    {
-      "files": "**/package.json",
-      "options": {
-        "jsonUtilsMode": "package-json"
+        "plugins": ["@aforemendude/prettier-plugin-json-utils"]
       }
     }
-  ],
-  "plugins": ["@aforemendude/prettier-plugin-json-utils"]
+  ]
 }
 ```
 
-The plugin wraps Prettier's `json`, `jsonc`, `json5`, and `json-stringify` parsers. The default is `sort-keys` for all
-four parsers, including when calling `prettier.format()` without a `filepath`.
+The plugin defaults to `sort-keys` for the targeted files. You can also select it explicitly:
+
+```json
+{
+  "overrides": [
+    {
+      "files": "data.json",
+      "options": {
+        "jsonUtilsMode": "sort-keys",
+        "plugins": ["@aforemendude/prettier-plugin-json-utils"]
+      }
+    }
+  ]
+}
+```
+
+Modes are never inferred from filenames or parsers. To use the specialized modes, set `jsonUtilsMode` alongside
+`plugins` in each file's override. For example, to format `.vscode/settings.json` and `package.json`:
+
+```json
+{
+  "overrides": [
+    {
+      "files": ".vscode/settings.json",
+      "options": {
+        "jsonUtilsMode": "vscode-settings",
+        "plugins": ["@aforemendude/prettier-plugin-json-utils"]
+      }
+    },
+    {
+      "files": "package.json",
+      "options": {
+        "jsonUtilsMode": "package-json",
+        "plugins": ["@aforemendude/prettier-plugin-json-utils"]
+      }
+    }
+  ]
+}
+```
+
+The plugin wraps Prettier's `json`, `jsonc`, `json5`, and `json-stringify` parsers for files where it is loaded. The
+default is `sort-keys` for all four parsers, including when calling `prettier.format()` without a `filepath`.
 
 When loaded after another JSON plugin, this plugin delegates to the nearest preceding parser with the same `astFormat`
 as Prettier's built-in parser. Parsers with a different or missing `astFormat` and their preprocessors are skipped. If
